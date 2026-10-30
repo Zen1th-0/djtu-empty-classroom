@@ -3,6 +3,20 @@
 基于大连交通大学综合教务管理系统(jw.djtu.edu.cn)的空教室查询网页。
 输入教务处账号密码登录,即可按 **校区 / 教学楼 / 周次 / 星期 / 节次范围** 查询空闲教室。
 
+**在线页面(GitHub Pages)**: https://zen1th-0.github.io/djtu-empty-classroom/
+
+> Pages 只是前端界面。教务系统不允许浏览器跨域直连,登录与查询由本机后端代理完成,
+> 所以使用在线页面时**仍需在自己电脑上运行 `node server.js`**(页面会自动连接 `http://127.0.0.1:8321`)。
+> 后端地址可用 URL 参数覆盖:`?api=http://192.168.x.x:8321`。
+
+## 访问方式
+
+| 场景 | 做法 |
+|---|---|
+| 电脑 | 运行 `node server.js`,浏览器打开 `http://127.0.0.1:8321`(推荐,前后端同源最稳) |
+| 手机(推荐) | 手机与电脑连同一 Wi-Fi,运行 `node server.js` 后按启动日志提示,手机浏览器访问 `http://电脑IP:8321` |
+| GitHub Pages 入口 | 电脑运行 `node server.js` 后,打开 https://zen1th-0.github.io/djtu-empty-classroom/ |
+
 ## 运行
 
 零 npm 依赖,只需 Node.js ≥ 18:
@@ -12,7 +26,8 @@ node server.js
 # 打开 http://127.0.0.1:8321
 ```
 
-端口可用环境变量 `PORT` 修改。
+端口/监听地址可用环境变量修改:`PORT=9000 HOST=127.0.0.1 node server.js`
+(默认监听 `0.0.0.0` 以便手机局域网访问;仅本机使用可设 `HOST=127.0.0.1`)
 
 ## 使用流程
 
