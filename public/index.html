@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交大空教室查询</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --green: #16a34a;
+    --green-bg: #dcfce7;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+
+  /* ---------- 登录页 ---------- */
+  #loginView {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #38bdf8 100%);
+    padding: 20px;
+  }
+  .login-card {
+    background: var(--card); border-radius: 16px; padding: 36px 32px;
+    width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .login-card h1 { font-size: 22px; text-align: center; margin-bottom: 6px; }
+  .login-card .sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .field input[type=text], .field input[type=password] {
+    width: 100%; padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 15px; outline: none; transition: border .15s;
+  }
+  .field input:focus { border-color: var(--primary); }
+  .captcha-row { display: flex; gap: 10px; }
+  .captcha-row input { flex: 1; }
+  .captcha-row img {
+    height: 44px; width: 110px; border-radius: 8px; border: 1.5px solid var(--border);
+    cursor: pointer; object-fit: cover; background: #fff;
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--primary); color: #fff; border: none; border-radius: 8px;
+    padding: 12px 18px; font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .15s; width: 100%;
+  }
+  .btn:hover { background: var(--primary-dark); }
+  .btn:disabled { opacity: .6; cursor: not-allowed; }
+  .tip { font-size: 12px; color: var(--muted); text-align: center; margin-top: 14px; line-height: 1.6; }
+  .alert {
+    background: var(--red-bg); color: var(--red); font-size: 13px;
+    padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; display: none;
+  }
+  .alert.show { display: block; }
+
+  /* ---------- 主界面 ---------- */
+  #appView { display: none; }
+  header.appbar {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .appbar .brand { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .appbar .brand .logo {
+    width: 28px; height: 28px; border-radius: 8px; background: var(--primary);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .userchip { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+  .userchip b { color: var(--text); }
+  .userchip .logout {
+    border: 1px solid var(--border); background: #fff; border-radius: 7px;
+    padding: 5px 12px; font-size: 13px; cursor: pointer; color: var(--muted);
+  }
+  .userchip .logout:hover { color: var(--red); border-color: var(--red); }
+
+  main { max-width: 1080px; margin: 20px auto 60px; padding: 0 16px; }
+
+  .panel { background: var(--card); border-radius: var(--radius); padding: 20px 22px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 18px; }
+  .panel h2 { font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .panel h2 .badge { font-size: 12px; font-weight: 500; color: var(--primary); background: #eff6ff; padding: 2px 9px; border-radius: 99px; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; align-items: end; }
+  .form-item label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+  select, .form-item input[type=number] {
+    width: 100%; padding: 9px 10px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 14px; background: #fff; outline: none;
+  }
+  select:focus, input:focus { border-color: var(--primary); }
+
+  .quick-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .chip {
+    font-size: 12.5px; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border);
+    background: #fff; cursor: pointer; color: var(--muted); user-select: none;
+  }
+  .chip:hover { border-color: var(--primary); color: var(--primary); }
+  .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  .buildings { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .b-item {
+    display: flex; align-items: center; gap: 5px; font-size: 13px;
+    border: 1px solid var(--border); padding: 6px 11px; border-radius: 8px; cursor: pointer;
+    background: #fff; user-select: none;
+  }
+  .b-item input { accent-color: var(--primary); cursor: pointer; }
+  .b-item:has(input:checked) { border-color: var(--primary); background: #eff6ff; color: var(--primary-dark); font-weight: 600; }
+  .b-ops { display: flex; gap: 8px; margin-left: auto; }
+  .b-ops .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .query-btn { margin-top: 16px; width: auto; min-width: 200px; }
+  .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); margin-top: 12px; }
+  .toggle-row input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+  /* ---------- 结果 ---------- */
+  .b-section { background: var(--card); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .b-head {
+    padding: 13px 20px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border); background: #f8fafc;
+  }
+  .b-head .b-name { font-weight: 700; font-size: 15px; }
+  .b-head .b-title { font-size: 12.5px; color: var(--muted); }
+  .b-head .cnt { margin-left: auto; font-size: 12.5px; }
+  .cnt .n-free { color: var(--green); font-weight: 700; font-size: 16px; }
+
+  table.rooms { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.rooms th {
+    text-align: left; font-weight: 600; color: var(--muted); font-size: 12px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  table.rooms td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  table.rooms tr:last-child td { border-bottom: none; }
+  table.rooms tr:hover td { background: #f8fafc; }
+  .pgrid { display: flex; gap: 3px; }
+  .pcell {
+    width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center;
+    justify-content: center; font-size: 10.5px; color: #fff; font-weight: 600;
+  }
+  .pcell.free { background: var(--green-bg); color: var(--green); }
+  .pcell.busy { background: var(--red-bg); color: var(--red); }
+  .pcell.in-range { box-shadow: 0 0 0 2px rgba(37,99,235,.45); }
+  .td-room { display: flex; align-items: center; gap: 8px; }
+  .status {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;
+    padding: 3px 10px; border-radius: 99px; white-space: nowrap;
+  }
+  .status.ok { background: var(--green-bg); color: var(--green); }
+  .status.no { background: var(--red-bg); color: var(--red); }
+  .room-name { font-weight: 600; }
+  .room-type { font-size: 12px; color: var(--muted); }
+  .searchbar { display: flex; gap: 10px; align-items: center; margin: 14px 0; flex-wrap: wrap; }
+  .searchbar input {
+    flex: 1; min-width: 220px; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; outline: none;
+  }
+  .legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); align-items: center; }
+  .legend i { display: inline-block; width: 13px; height: 13px; border-radius: 4px; margin-right: 4px; vertical-align: -2px; }
+
+  #loading { display: none; padding: 30px; text-align: center; color: var(--muted); }
+  #loading .bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 14px auto 8px; max-width: 320px; }
+  #loading .bar i { display: block; height: 100%; background: var(--primary); width: 0; transition: width .3s; }
+  .empty-hint { text-align: center; color: var(--muted); padding: 44px 20px; font-size: 14px; }
+  .empty-hint .big { font-size: 40px; margin-bottom: 10px; }
+
+  @media (max-width: 700px) {
+    header.appbar { padding: 10px 14px; }
+    .appbar .brand { font-size: 15px; }
+    .userchip { font-size: 12px; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .userchip #semInfo { display: none; }
+    main { margin: 12px auto 40px; padding: 0 10px; }
+    .panel { padding: 14px 14px; }
+    .form-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-item:first-child { grid-column: 1 / -1; }
+    .query-btn { width: 100%; }
+    .b-item { padding: 5px 9px; font-size: 12.5px; }
+    .b-ops { margin-left: 0; width: 100%; }
+    .searchbar { gap: 8px; }
+    .legend { flex-wrap: wrap; gap: 8px; }
+    .legend > span:last-child { width: 100%; }
+
+    /* 结果表格 → 卡片 */
+    table.rooms thead { display: none; }
+    table.rooms, table.rooms tbody { display: block; }
+    table.rooms tr { display: block; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+    table.rooms td { display: inline-block; border-bottom: none; padding: 2px 10px 2px 0; }
+    table.rooms td[data-th]::before { content: attr(data-th) ": "; color: var(--muted); font-size: 12px; }
+    table.rooms td.td-room { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 0 4px; }
+    table.rooms td.td-room::before { content: none; }
+    table.rooms td.td-grid { display: block; margin-top: 5px; }
+    .pcell { width: 17px; height: 17px; font-size: 9px; border-radius: 4px; }
+    .b-head { flex-wrap: wrap; padding: 10px 14px; gap: 6px; }
+    .b-head .cnt { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 登录视图 ============ -->
+<div id="loginView">
+  <div class="login-card">
+    <h1>📚 交大空教室查询</h1>
+    <div class="sub">大连交通大学 · 综合教务管理系统</div>
+    <div class="alert" id="loginError"></div>
+    <div class="field">
+      <label>学号</label>
+      <input type="text" id="inUser" placeholder="请输入学号" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input type="password" id="inPass" placeholder="请输入教务处密码" autocomplete="current-password">
+    </div>
+    <div class="field">
+      <label>验证码</label>
+      <div class="captcha-row">
+        <input type="text" id="inCaptcha" placeholder="请输入验证码" maxlength="6" autocomplete="off">
+        <img id="captchaImg" src="" alt="验证码" title="点击刷新验证码">
+      </div>
+    </div>
+    <button class="btn" id="btnLogin">登 录</button>
+    <div class="tip">使用教务系统账号登录 · 密码仅用于本次登录请求<br>不保存任何账号信息</div>
+  </div>
+</div>
+
+<!-- ============ 主视图 ============ -->
+<div id="appView">
+  <header class="appbar">
+    <div class="brand"><span class="logo">📚</span>交大空教室查询</div>
+    <div class="userchip">
+      <span>你好，<b id="userName">同学</b><span id="userNo"></span></span>
+      <span id="semInfo"></span>
+      <button class="logout" id="btnLogout">退出</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="panel">
+      <h2>查询条件 <span class="badge" id="metaBadge">读取学期信息中…</span></h2>
+      <div class="form-grid">
+        <div class="form-item">
+          <label>校区</label>
+          <select id="selCampus"></select>
+        </div>
+        <div class="form-item">
+          <label>周次</label>
+          <input type="number" id="inWeek" min="1" max="25" value="1">
+        </div>
+        <div class="form-item">
+          <label>星期</label>
+          <select id="selDay">
+            <option value="1">周一</option><option value="2">周二</option>
+            <option value="3">周三</option><option value="4">周四</option>
+            <option value="5">周五</option><option value="6">周六</option>
+            <option value="7">周日</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>空闲节次(起)</label>
+          <select id="selFrom"></select>
+        </div>
+        <div class="form-item">
+          <label>空闲节次(止)</label>
+          <select id="selTo"></select>
+        </div>
+      </div>
+      <div class="quick-chips" id="quickChips">
+        <span class="chip" data-f="1" data-t="11">全天 1-11 节</span>
+        <span class="chip" data-f="1" data-t="4">上午 1-4 节</span>
+        <span class="chip" data-f="5" data-t="8">下午 5-8 节</span>
+        <span class="chip" data-f="9" data-t="11">晚间 9-11 节</span>
+      </div>
+
+      <div class="form-item" style="margin-top:14px">
+        <label>教学楼(可多选)</label>
+        <div class="buildings" id="buildingList"></div>
+      </div>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="chkFreeOnly" checked>
+        <label for="chkFreeOnly">只显示所选节次全程空闲的教室</label>
+      </div>
+      <button class="btn query-btn" id="btnQuery">🔍 查询空教室</button>
+    </div>
+
+    <div id="loading">
+      正在查询教务系统…
+      <div class="bar"><i id="loadBar"></i></div>
+      <span id="loadText" style="font-size:12.5px"></span>
+    </div>
+
+    <div class="searchbar" id="resultOps" style="display:none">
+      <input type="text" id="inSearch" placeholder="搜索教室名,如 2-301">
+      <div class="legend">
+        <span><i style="background:var(--green-bg);border:1px solid var(--green)"></i>空闲</span>
+        <span><i style="background:var(--red-bg);border:1px solid var(--red)"></i>占用</span>
+        <span><i style="background:#fff;box-shadow:0 0 0 2px rgba(37,99,235,.45)"></i>所选节次</span>
+        <span style="color:var(--muted)">教室命名:J##=教学楼 · T##=图书馆语音室 · Y##=研究生楼</span>
+      </div>
+    </div>
+    <div id="results"></div>
+  </main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const DAYS = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' };
+
+/* 后端地址:同源部署(本机 node server.js)时为空串;
+   从 GitHub Pages 等静态托管打开时,默认连本机后端,可用 ?api=http://地址:端口 覆盖 */
+const __q = new URLSearchParams(location.search);
+const API_BASE = __q.get('api')
+  || ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') ? '' : (localStorage.getItem('djtu_api_base') || 'http://127.0.0.1:8321'));
+
+let sid = null;
+let campuses = [];
+let meta = null;
+
+/* ---------------- 工具 ---------------- */
+async function api(path, opts = {}) {
+  let resp;
+  try {
+    resp = await fetch(API_BASE + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch (e) {
+    throw new Error(`无法连接查询服务 ${API_BASE || '(本页同源)'} — 请先在电脑上运行 node server.js`);
+  }
+  const data = await resp.json();
+  if (resp.status === 401) {
+    if (sid) { showAlert(data.error || '登录已过期'); }
+    doLogout(true);
+    throw new Error(data.error || '未登录');
+  }
+  return data;
+}
+
+function showAlert(msg) {
+  const el = $('#loginError');
+  el.textContent = msg; el.classList.add('show');
+}
+function hideAlert() { $('#loginError').classList.remove('show'); }
+
+/* ---------------- 登录 ---------------- */
+async function refreshCaptcha() {
+  const d = await api('/api/captcha');
+  sid = d.sid;
+  $('#captchaImg').src = d.img;
+}
+
+$('#captchaImg').addEventListener('click', refreshCaptcha);
+$('#inCaptcha').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btnLogin').click(); });
+$('#inPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btnLogin').click(); });
+
+$('#btnLogin').addEventListener('click', async () => {
+  hideAlert();
+  const username = $('#inUser').value.trim();
+  const password = $('#inPass').value;
+  const captcha = $('#inCaptcha').value.trim();
+  if (!username || !password || !captcha) { showAlert('请填写完整的账号、密码和验证码'); return; }
+  const btn = $('#btnLogin');
+  btn.disabled = true; btn.textContent = '登录中…';
+  try {
+    const d = await api('/api/login', { method: 'POST', body: { sid, username, password, captcha } });
+    if (!d.ok) {
+      showAlert(d.error || '登录失败');
+      if (d.img) { $('#captchaImg').src = d.img; } else { await refreshCaptcha(); }
+      $('#inCaptcha').value = '';
+      return;
+    }
+    localStorage.setItem('djtu_student_no', username);
+    enterApp(d);
+  } catch (e) {
+    showAlert(e.message);
+    refreshCaptcha().catch(() => {});
+  } finally {
+    btn.disabled = false; btn.textContent = '登 录';
+  }
+});
+
+/* ---------------- 主界面 ---------------- */
+async function enterApp(loginData) {
+  $('#loginView').style.display = 'none';
+  $('#appView').style.display = 'block';
+  if (loginData.user && loginData.user.name) {
+    $('#userName').textContent = loginData.user.name;
+    $('#userNo').textContent = '(' + loginData.user.username + ')';
+  } else {
+    $('#userName').textContent = localStorage.getItem('djtu_student_no') || '同学';
+  }
+  meta = loginData;
+  updateMeta(loginData);
+
+  if (!campuses.length) {
+    const d = await api('/api/campuses');
+    campuses = d.campuses;
+  }
+  renderCampusSelect();
+  renderPeriodSelects();
+}
+
+function updateMeta(m) {
+  const badge = $('#metaBadge');
+  if (m.semester && m.week) {
+    badge.textContent = `${m.semester} · 当前第 ${m.week} 周`;
+    $('#inWeek').value = m.week;
+    $('#semInfo').textContent = m.semester + ' 第' + m.week + '周';
+  } else {
+    badge.textContent = '学期信息未获取到';
+  }
+  if (m.weekday) $('#selDay').value = String(m.weekday);
+}
+
+function renderCampusSelect() {
+  const sel = $('#selCampus');
+  sel.innerHTML = campuses.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  sel.addEventListener('change', renderBuildings);
+  renderBuildings();
+}
+
+function renderBuildings() {
+  const cid = parseInt($('#selCampus').value, 10);
+  const c = campuses.find((x) => x.id === cid);
+  const wrap = $('#buildingList');
+  wrap.innerHTML = c.buildings.map((b) => `
+    <label class="b-item">
+      <input type="checkbox" value="${b.id}" ${b.def ? 'checked' : ''}> ${b.name}
+    </label>`).join('');
+  // 操作按钮
+  const ops = document.createElement('div');
+  ops.className = 'b-ops';
+  ops.innerHTML = `<span class="chip" id="bAll">全选</span><span class="chip" id="bNone">清空</span>`;
+  wrap.appendChild(ops);
+  ops.querySelector('#bAll').addEventListener('click', () => wrap.querySelectorAll('input').forEach((i) => (i.checked = true)));
+  ops.querySelector('#bNone').addEventListener('click', () => wrap.querySelectorAll('input').forEach((i) => (i.checked = false)));
+}
+
+function renderPeriodSelects() {
+  const opts = Array.from({ length: 11 }, (_, i) => `<option value="${i + 1}">第 ${i + 1} 节</option>`).join('');
+  $('#selFrom').innerHTML = opts;
+  $('#selTo').innerHTML = opts;
+  $('#selFrom').value = '1';
+  $('#selTo').value = '11';
+  $('#selFrom').addEventListener('change', syncChips);
+  $('#selTo').addEventListener('change', syncChips);
+  $('#quickChips').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    $('#selFrom').value = chip.dataset.f;
+    $('#selTo').value = chip.dataset.t;
+    syncChips();
+  });
+  syncChips();
+}
+
+function syncChips() {
+  const f = $('#selFrom').value, t = $('#selTo').value;
+  document.querySelectorAll('#quickChips .chip').forEach((c) => {
+    c.classList.toggle('active', c.dataset.f === f && c.dataset.t === t);
+  });
+  if (parseInt(f, 10) > parseInt(t, 10)) $('#selTo').value = f;
+}
+
+/* ---------------- 查询 ---------------- */
+$('#btnQuery').addEventListener('click', async () => {
+  const aid = parseInt($('#selCampus').value, 10);
+  const buildings = [...document.querySelectorAll('#buildingList input:checked')].map((i) => parseInt(i.value, 10));
+  const week = parseInt($('#inWeek').value, 10);
+  const day = parseInt($('#selDay').value, 10);
+  const from = parseInt($('#selFrom').value, 10);
+  const to = parseInt($('#selTo').value, 10);
+  if (!buildings.length) { alert('请至少选择一栋教学楼'); return; }
+
+  const btn = $('#btnQuery');
+  btn.disabled = true;
+  $('#loading').style.display = 'block';
+  $('#results').innerHTML = '';
+  $('#resultOps').style.display = 'none';
+  let done = 0;
+  const tick = setInterval(() => {
+    $('#loadBar').style.width = Math.round((done / buildings.length) * 100) + '%';
+    $('#loadText').textContent = `${done} / ${buildings.length} 栋教学楼`;
+  }, 200);
+
+  try {
+    const d = await api('/api/query', {
+      method: 'POST',
+      body: { sid, aid, buildings, week, day, from, to },
+    });
+    renderResults(d);
+  } catch (e) {
+    $('#results').innerHTML = `<div class="empty-hint"><div class="big">⚠️</div>查询失败:${e.message}</div>`;
+  } finally {
+    clearInterval(tick);
+    $('#loading').style.display = 'none';
+    btn.disabled = false;
+  }
+});
+
+function renderResults(d) {
+  const results = d.results || [];
+  const from = d.from, to = d.to;
+  $('#resultOps').style.display = 'flex';
+
+  const render = () => {
+    const kw = $('#inSearch').value.trim().toLowerCase();
+    let html = '';
+    let totalFree = 0;
+    for (const b of results) {
+      const rooms = (b.rooms || [])
+        .filter((r) => !kw || r.name.toLowerCase().includes(kw))
+        .filter((r) => !$('#chkFreeOnly').checked || r.freeInRange)
+        .sort((a, b2) => (b2.freeInRange - a.freeInRange) || (a.occupied.length - b2.occupied.length) || a.name.localeCompare(b2.name));
+      const freeCount = rooms.filter((r) => r.freeInRange).length;
+      totalFree += freeCount;
+      html += `
+      <div class="b-section">
+        <div class="b-head">
+          <span class="b-name">${b.title ? escapeHtml(b.title.split(' ')[0].replace(/2026秋|202\d[春夏]/, '')) : '教学楼 ' + b.buildingId}</span>
+          <span class="b-title">${escapeHtml(b.title || '')}</span>
+          ${b.error ? `<span class="status no">查询失败</span>` : ''}
+          <span class="cnt">空闲 <span class="n-free">${freeCount}</span> / ${rooms.length} 间</span>
+        </div>
+        ${rooms.length ? `<table class="rooms">
+          <thead><tr><th>教室</th><th>座位</th><th>类型</th><th>第1节 ~ 第${(b.rooms[0] && b.rooms[0].totalPeriods) || 11}节</th></tr></thead>
+          <tbody>
+            ${rooms.map((r) => `
+              <tr>
+                <td class="td-room"><div class="room-name">${escapeHtml(r.name)}</div>${r.freeInRange ? '<span class="status ok">✓ 空闲</span>' : '<span class="status no">占用</span>'}</td>
+                <td data-th="座位">${r.seats || '-'}</td>
+                <td data-th="类型"><div class="room-type">${escapeHtml(r.type)}${r.furniture ? ' · ' + escapeHtml(r.furniture) : ''}</div></td>
+                <td class="td-grid"><div class="pgrid">${periodCells(r, from, to)}</div></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>` : `<div class="empty-hint" style="padding:20px">该楼没有符合条件的教室</div>`}
+      </div>`;
+    }
+    if (!html) html = `<div class="empty-hint"><div class="big">🔍</div>没有匹配的教室</div>`;
+    $('#results').innerHTML = html;
+    $('#resultOps').insertAdjacentHTML('beforeend', '');
+    const firstSec = document.querySelector('.b-head .b-title');
+    document.title = totalFree > 0 ? `空教室 ${totalFree} 间 · 交大空教室查询` : '交大空教室查询';
+  };
+
+  $('#inSearch').oninput = render;
+  $('#chkFreeOnly').onchange = render;
+  render();
+}
+
+function periodCells(room, from, to) {
+  const total = room.totalPeriods || 11;
+  let out = '';
+  for (let i = 1; i <= total; i++) {
+    const busy = room.occupied.includes(i);
+    const inRange = i >= from && i <= to;
+    out += `<div class="pcell ${busy ? 'busy' : 'free'} ${inRange ? 'in-range' : ''}" title="第${i}节 ${busy ? '占用' : '空闲'}">${i}</div>`;
+  }
+  return out;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---------------- 退出 ---------------- */
+function doLogout(silent) {
+  const oldSid = sid;
+  sid = null;
+  if (oldSid) api('/api/logout', { method: 'POST', body: { sid: oldSid } }).catch(() => {});
+  $('#appView').style.display = 'none';
+  $('#loginView').style.display = 'flex';
+  $('#inCaptcha').value = '';
+  $('#inPass').value = '';
+  hideAlert();
+  refreshCaptcha().catch(() => {});
+}
+$('#btnLogout').addEventListener('click', () => doLogout(false));
+
+/* ---------------- 启动 ---------------- */
+(async function init() {
+  const saved = localStorage.getItem('djtu_student_no');
+  if (saved) { $('#inUser').value = saved; $('#inPass').focus(); }
+  await refreshCaptcha().catch((e) => showAlert(e.message));
+})();
+</script>
+</body>
+</html>
