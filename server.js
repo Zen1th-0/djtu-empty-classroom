@@ -389,7 +389,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true });
     }
 
-    /* ---- 静态文件 ---- */
+    /* ---- 静态文件(index.html 在仓库根目录,与 GitHub Pages 结构一致) ---- */
     let file = p === '/' ? '/index.html' : p;
     const safe = path.normalize(file).replace(/^(\.\.[/\\])+/, '');
     const full = path.join(__dirname, 'public', safe);
@@ -398,6 +398,14 @@ const server = http.createServer(async (req, res) => {
       const ext = path.extname(full).toLowerCase();
       res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', ...res.__cors });
       return fs.createReadStream(full).pipe(res);
+    }
+    // 根目录的 index.html
+    const rootIndex = path.join(__dirname, 'index.html');
+    if (p === '/' || p === '/index.html') {
+      if (fs.existsSync(rootIndex)) {
+        res.writeHead(200, { 'Content-Type': MIME['.html'], ...res.__cors });
+        return fs.createReadStream(rootIndex).pipe(res);
+      }
     }
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Not Found');

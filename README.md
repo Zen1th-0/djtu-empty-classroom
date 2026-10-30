@@ -59,9 +59,9 @@ node server.js
 
 ```
 empty-classroom/
+├── index.html         # 单页前端:登录 + 查询界面(GitHub Pages 直接托管此文件)
 ├── server.js          # 零依赖 Node 后端:会话管理、登录代理、占用表解析、静态文件
-└── public/
-    └── index.html     # 单页前端:登录 + 查询界面
+└── public/            # (备用)静态资源目录
 ```
 
 ## 安全说明
