@@ -314,11 +314,12 @@
 const $ = (s) => document.querySelector(s);
 const DAYS = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' };
 
-/* 后端地址:同源部署(本机 node server.js)时为空串;
-   从 GitHub Pages 等静态托管打开时,默认连本机后端,可用 ?api=http://地址:端口 覆盖 */
+/* 后端地址:页面由 node server.js 提供时(无论用 127.0.0.1 还是局域网 IP 打开)用同源接口;
+   从 GitHub Pages / 本地文件打开时,默认连本机后端,可用 ?api=http://地址:端口 覆盖 */
 const __q = new URLSearchParams(location.search);
+const __isStaticHost = /(^|\.)github\.io$/.test(location.hostname) || location.protocol === 'file:';
 const API_BASE = __q.get('api')
-  || ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') ? '' : (localStorage.getItem('djtu_api_base') || 'http://127.0.0.1:8321'));
+  || (__isStaticHost ? (localStorage.getItem('djtu_api_base') || 'http://127.0.0.1:8321') : '');
 
 let sid = null;
 let campuses = [];
